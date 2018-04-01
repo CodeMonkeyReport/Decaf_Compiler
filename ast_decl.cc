@@ -36,7 +36,7 @@ void VarDecl::Declare(Hashtable<Decl*> *symbolTable)
 }
 void VarDecl::Check()
 {
-    // Do nothing
+    // Do nothing, 'checking' of declares is already done in Declare.
 }
 
 

@@ -1,0 +1,13 @@
+interface MyInterface
+{
+    void function();
+    void anotherOne();
+}
+
+class MyClass implements MyInterface
+{
+    void function()
+    {
+        // Do a thing
+    }
+}

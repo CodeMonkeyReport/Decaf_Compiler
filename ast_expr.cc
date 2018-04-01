@@ -5,6 +5,7 @@
 #include "ast_expr.h"
 #include "ast_type.h"
 #include "ast_decl.h"
+#include "errors.h"
 #include <string.h>
 
 
@@ -73,7 +74,16 @@ Call::Call(yyltype loc, Expr *b, Identifier *f, List<Expr*> *a) : Expr(loc)  {
     (field=f)->SetParent(this);
     (actuals=a)->SetParentAll(this);
 }
- 
+void Call::Check()
+{
+    Decl* foundDeclare = this->FindDecl(this->field->name);
+    FnDecl* foundFunctionDeclare = dynamic_cast<FnDecl*>(foundDeclare);
+
+    if (foundFunctionDeclare == NULL)
+    {
+        ReportError::IdentifierNotDeclared(this->field, LookingForFunction);
+    }
+}
 
 NewExpr::NewExpr(yyltype loc, NamedType *c) : Expr(loc) { 
   Assert(c != NULL);
