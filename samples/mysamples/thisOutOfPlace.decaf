@@ -1,0 +1,4 @@
+int myFunction()
+{
+    this.a = 5;
+}

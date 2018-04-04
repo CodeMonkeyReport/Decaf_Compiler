@@ -26,7 +26,7 @@ class Expr : public Stmt
   public:
     Expr(yyltype loc) : Stmt(loc) {}
     Expr() : Stmt() {}
-    virtual void Check();
+    virtual Type* Check();
 };
 
 /* This node type is used for those places where an expression is optional.
@@ -98,6 +98,7 @@ class CompoundExpr : public Expr
   public:
     CompoundExpr(Expr *lhs, Operator *op, Expr *rhs); // for binary
     CompoundExpr(Operator *op, Expr *rhs);             // for unary
+    Type* Check();
 };
 
 class ArithmeticExpr : public CompoundExpr 
@@ -105,6 +106,7 @@ class ArithmeticExpr : public CompoundExpr
   public:
     ArithmeticExpr(Expr *lhs, Operator *op, Expr *rhs) : CompoundExpr(lhs,op,rhs) {}
     ArithmeticExpr(Operator *op, Expr *rhs) : CompoundExpr(op,rhs) {}
+    Type* Check();
 };
 
 class RelationalExpr : public CompoundExpr 
@@ -145,6 +147,7 @@ class This : public Expr
 {
   public:
     This(yyltype loc) : Expr(loc) {}
+    Type* Check();
 };
 
 class ArrayAccess : public LValue 
@@ -169,6 +172,7 @@ class FieldAccess : public LValue
     
   public:
     FieldAccess(Expr *base, Identifier *field); //ok to pass NULL base
+    Type* Check();
 };
 
 /* Like field access, call is used both for qualified base.field()
@@ -184,7 +188,7 @@ class Call : public Expr
     
   public:
     Call(yyltype loc, Expr *base, Identifier *field, List<Expr*> *args);
-    void Check();
+    Type* Check();
 };
 
 class NewExpr : public Expr

@@ -9,9 +9,9 @@
 #include <string.h>
 
 
-void Expr::Check()
+Type* Expr::Check()
 {
-
+    return NULL;
 }
 
 
@@ -43,6 +43,10 @@ CompoundExpr::CompoundExpr(Expr *l, Operator *o, Expr *r)
     (left=l)->SetParent(this); 
     (right=r)->SetParent(this);
 }
+Type* CompoundExpr::Check()
+{
+    return NULL;
+}
 
 CompoundExpr::CompoundExpr(Operator *o, Expr *r) 
   : Expr(Join(o->GetLocation(), r->GetLocation())) {
@@ -52,6 +56,11 @@ CompoundExpr::CompoundExpr(Operator *o, Expr *r)
     (right=r)->SetParent(this);
 }
 
+Type* ArithmeticExpr::Check()
+{
+    // This one will need to be updated.
+    return NULL;
+}
   
 ArrayAccess::ArrayAccess(yyltype loc, Expr *b, Expr *s) : LValue(loc) {
     (base=b)->SetParent(this); 
@@ -65,6 +74,20 @@ FieldAccess::FieldAccess(Expr *b, Identifier *f)
     if (base) base->SetParent(this); 
     (field=f)->SetParent(this);
 }
+Type* FieldAccess::Check()
+{
+    // If the base is not null then there was a '.' access
+    if (this->base != NULL)
+    {
+        Type* baseType = this->base->Check();
+        
+    }
+    else
+    {
+    Decl* source = this->FindDecl(this->field->name);
+
+    }
+}
 
 
 Call::Call(yyltype loc, Expr *b, Identifier *f, List<Expr*> *a) : Expr(loc)  {
@@ -74,15 +97,70 @@ Call::Call(yyltype loc, Expr *b, Identifier *f, List<Expr*> *a) : Expr(loc)  {
     (field=f)->SetParent(this);
     (actuals=a)->SetParentAll(this);
 }
-void Call::Check()
+Type* Call::Check()
 {
-    Decl* foundDeclare = this->FindDecl(this->field->name);
-    FnDecl* foundFunctionDeclare = dynamic_cast<FnDecl*>(foundDeclare);
-
-    if (foundFunctionDeclare == NULL)
+    Decl* foundDeclare;
+    FnDecl* foundFunctionDeclare;
+    if (this->base != NULL)
     {
-        ReportError::IdentifierNotDeclared(this->field, LookingForFunction);
+        // Problem is we're not getting the class correclty here
+        Type* baseType = this->base->Check();
+        if (baseType == NULL)
+            return NULL;
+
+        Decl* baseDecl = this->FindDecl(baseType->typeName);
+        ClassDecl* baseClassDecl = dynamic_cast<ClassDecl*>(baseDecl);
+        if (baseClassDecl == NULL)
+            return NULL;
+        foundDeclare = baseClassDecl->symbolTable->Lookup(this->field->name);
+        foundFunctionDeclare = dynamic_cast<FnDecl*>(foundDeclare);
+
+        // If there is a field not a function call
+        if (foundDeclare != NULL && foundFunctionDeclare == NULL)
+        {
+            ReportError::InaccessibleField(this->field, baseType);
+            return NULL;
+        }
+        // There is no member with that name in the class
+        else if(foundDeclare == NULL && foundFunctionDeclare == NULL)
+        {
+            ReportError::FieldNotFoundInBase(this->field, baseType);
+            return NULL;
+        }
     }
+    else
+    {
+        foundDeclare = this->FindDecl(this->field->name);
+        foundFunctionDeclare = dynamic_cast<FnDecl*>(foundDeclare);
+        if (foundFunctionDeclare == NULL)
+        {
+            ReportError::IdentifierNotDeclared(this->field, LookingForFunction);
+            return NULL;
+        }
+    }
+    return foundFunctionDeclare->returnType;
+}
+
+Type* This::Check()
+{
+    Node* p;
+    ClassDecl* check;
+    bool foundClassDeclare = false;
+
+    for (p = this->parent; p != NULL; p = p->parent)
+    {
+        check = dynamic_cast<ClassDecl*>(p);
+        if (check != NULL)
+        {
+            foundClassDeclare = true;
+            break;
+        }
+    }
+    if (foundClassDeclare == false)
+    {
+        ReportError::ThisOutsideClassScope(this);
+    }
+    return new NamedType(check->id);
 }
 
 NewExpr::NewExpr(yyltype loc, NamedType *c) : Expr(loc) { 

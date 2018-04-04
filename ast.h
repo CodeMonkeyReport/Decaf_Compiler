@@ -35,6 +35,7 @@
 #include <iostream>
 
 class Decl;
+class Type;
 
 class Node 
 {
@@ -44,6 +45,7 @@ class Node
   public:
     Node *parent;
     Node(yyltype loc);
+    virtual Type* Check();
     Decl* FindDecl(const char *name);
     Node();
     Hashtable<Decl*> *symbolTable;

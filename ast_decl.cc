@@ -34,9 +34,10 @@ void VarDecl::Declare(Hashtable<Decl*> *symbolTable)
         symbolTable->Enter(this->id->name, this);
     }
 }
-void VarDecl::Check()
+Type* VarDecl::Check()
 {
     // Do nothing, 'checking' of declares is already done in Declare.
+    return NULL;
 }
 
 
@@ -62,10 +63,10 @@ void ClassDecl::Declare(Hashtable<Decl*> *symbolTable)
         symbolTable->Enter(this->id->name, this);
     }
 }
-void ClassDecl::Check()
+Type* ClassDecl::Check()
 {
     if (this->checked)
-        return;
+        return NULL;
     this->checked = true;
 
     for (int i = 0; i < this->members->NumElements(); i++)
@@ -149,6 +150,7 @@ void ClassDecl::Check()
             ReportError::InterfaceNotImplemented(this, this->implements->Nth(i));
         }
     }
+    return NULL;
 }
 
 InterfaceDecl::InterfaceDecl(Identifier *n, List<Decl*> *m) : Decl(n) {
@@ -169,10 +171,10 @@ void InterfaceDecl::Declare(Hashtable<Decl*> *symbolTable)
         symbolTable->Enter(this->id->name, this);
     }
 }
-void InterfaceDecl::Check()
+Type* InterfaceDecl::Check()
 {
     if (this->checked)
-        return;
+        return NULL;
     this->checked = true;
 
     for (int i = 0; i < this->members->NumElements(); i++)
@@ -184,6 +186,7 @@ void InterfaceDecl::Check()
     {
         this->members->Nth(i)->Check();
     }
+    return NULL;
 }
 	
 FnDecl::FnDecl(Identifier *n, Type *r, List<VarDecl*> *d) : Decl(n) {
@@ -214,15 +217,16 @@ void FnDecl::Declare(Hashtable<Decl*> *symbolTable)
         }
     }
 }
-void FnDecl::Check()
+Type* FnDecl::Check()
 {
     if (this->checked)
-        return;
+        return NULL;
     this->checked = true;
     if (this->body != NULL)
     {
         this->body->Check();
     }
+    return NULL;
 }
 bool FnDecl::Compare(FnDecl* a, FnDecl* b)
 {

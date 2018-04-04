@@ -3,5 +3,5 @@ int a;
 int func()
 {
     call();
-    return 1;
+
 }

@@ -13,7 +13,7 @@ Program::Program(List<Decl*> *d) {
     (decls=d)->SetParentAll(this);
 }
 
-void Program::Check() {
+Type* Program::Check() {
     /* pp3: here is where the semantic analyzer is kicked off.
      *      The general idea is perform a tree traversal of the
      *      entire program, examining all constructs for compliance
@@ -30,6 +30,7 @@ void Program::Check() {
     {
         this->decls->Nth(i)->Check();
     }
+    return NULL;
 }
 
 StmtBlock::StmtBlock(List<VarDecl*> *d, List<Stmt*> *s) {
@@ -39,10 +40,10 @@ StmtBlock::StmtBlock(List<VarDecl*> *d, List<Stmt*> *s) {
     (decls=d)->SetParentAll(this);
     (stmts=s)->SetParentAll(this);
 }
-void StmtBlock::Check()
+Type* StmtBlock::Check()
 {
     if (this->checked)
-        return;
+        return NULL;
     this->checked = true;
     for (int i = 0; i < this->decls->NumElements(); i++)
     {
@@ -58,6 +59,7 @@ void StmtBlock::Check()
     {
         this->stmts->Nth(i)->Check();
     }
+    return NULL;
 }
 
 ConditionalStmt::ConditionalStmt(Expr *t, Stmt *b) { 
@@ -66,9 +68,9 @@ ConditionalStmt::ConditionalStmt(Expr *t, Stmt *b) {
     (test=t)->SetParent(this); 
     (body=b)->SetParent(this);
 }
-void ConditionalStmt::Check()
+Type* ConditionalStmt::Check()
 {
-
+    return NULL;
 }
 
 ForStmt::ForStmt(Expr *i, Expr *t, Expr *s, Stmt *b): LoopStmt(t, b) { 
@@ -77,34 +79,36 @@ ForStmt::ForStmt(Expr *i, Expr *t, Expr *s, Stmt *b): LoopStmt(t, b) {
     (init=i)->SetParent(this);
     (step=s)->SetParent(this);
 }
-void ForStmt::Check()
+Type* ForStmt::Check()
 {
     if (this->checked)
-        return;
+        return NULL;
     this->checked = true;
     this->init->Check();
     this->test->Check();
     this->step->Check();
     this->body->Check();
+    return NULL;
 }
 
-void LoopStmt::Check()
+Type* LoopStmt::Check()
 {
-
+    return NULL;
 }
 
-void BreakStmt::Check()
+Type* BreakStmt::Check()
 {
-
+    return NULL;
 }
 
-void WhileStmt::Check()
+Type* WhileStmt::Check()
 {
     if (this->checked)
-        return;
+        return NULL;
     this->checked = true;
     this->test->Check();
     this->body->Check();
+    return NULL;
 }
 
 IfStmt::IfStmt(Expr *t, Stmt *tb, Stmt *eb): ConditionalStmt(t, tb) { 
@@ -113,13 +117,14 @@ IfStmt::IfStmt(Expr *t, Stmt *tb, Stmt *eb): ConditionalStmt(t, tb) {
     elseBody = eb;
     if (elseBody) elseBody->SetParent(this);
 }
-void IfStmt::Check()
+Type* IfStmt::Check()
 {
     this->test->Check();
     this->body->Check();
 
     if(this->elseBody)
         this->elseBody->Check();
+    return NULL;
 }
 
 ReturnStmt::ReturnStmt(yyltype loc, Expr *e) : Stmt(loc) { 
@@ -127,12 +132,13 @@ ReturnStmt::ReturnStmt(yyltype loc, Expr *e) : Stmt(loc) {
     this->checked = false;
     (expr=e)->SetParent(this);
 }
-void ReturnStmt::Check()
+Type* ReturnStmt::Check()
 {
     if (this->checked)
-        return;
+        return NULL;
     this->checked = true;
     this->expr->Check();
+    return NULL;
 }
   
 PrintStmt::PrintStmt(List<Expr*> *a) {    
@@ -140,13 +146,14 @@ PrintStmt::PrintStmt(List<Expr*> *a) {
     this->checked = false;
     (args=a)->SetParentAll(this);
 }
-void PrintStmt::Check()
+Type* PrintStmt::Check()
 {
     if (this->checked)
-        return;
+        return NULL;
     this->checked = true;
     for (int i = 0; i < this->args->NumElements(); i++)
     {
         this->args->Nth(i)->Check();
     }
+    return NULL;
 }

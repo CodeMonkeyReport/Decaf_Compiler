@@ -28,9 +28,9 @@ Type::Type(const char *n) {
     Assert(n);
     typeName = strdup(n);
 }
-void Type::Check()
+Type* Type::Check()
 {
-
+    return NULL;
 }
 
 
@@ -38,7 +38,7 @@ NamedType::NamedType(Identifier *i) : Type(*i->GetLocation()) {
     Assert(i != NULL);
     (id=i)->SetParent(this);
 }
-void NamedType::Check()
+Type* NamedType::Check()
 {
     Decl* typeDeclare = this->FindDecl(this->id->name);
 
@@ -46,14 +46,33 @@ void NamedType::Check()
     {
         ReportError::IdentifierNotDeclared(this->id, LookingForType);
     }
+    return NULL;
+}
+Hashtable<Decl*> NamedType::GetMembers()
+{
+    Decl* origin = this->FindDecl(this->id->name);
+    return origin->symbolTable;
 }
 
 ArrayType::ArrayType(yyltype loc, Type *et) : Type(loc) {
     Assert(et != NULL);
+    yyltype empty;
+    this->symbolTable = new Hashtable<Decl*>();
+    this->symbolTable->Enter("length", 
+                new FnDecl(new Identifier(empty, "length"), 
+                        new Type("int"),
+                        new List<VarDecl*>())
+                );
+
     (elemType=et)->SetParent(this);
 }
-void ArrayType::Check()
+Type* ArrayType::Check()
 {
     this->elemType->Check();
+    return NULL;
+}
+Hashtable<Decl*> ArrayType::GetMembers()
+{
+    return this->symbolTable;
 }
 

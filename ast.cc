@@ -18,6 +18,11 @@ Node::Node() {
     location = NULL;
     parent = NULL;
 }
+Type* Node::Check()
+{
+    // Do nothing, subclasses will override this.
+    return NULL;
+}
 
 Decl *Node::FindDecl(const char *name)
 {

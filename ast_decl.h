@@ -31,7 +31,7 @@ class Decl : public Node
     Identifier *id;
     Decl(Identifier *name);
     virtual void Declare(Hashtable<Decl*> *symbolTable) = 0;
-    virtual void Check() = 0;
+    virtual Type* Check() = 0;
     friend std::ostream& operator<<(std::ostream& out, Decl *d) { return out << d->id; }
 };
 
@@ -40,20 +40,19 @@ class VarDecl : public Decl
   public:
     Type *type;
     void Declare(Hashtable<Decl*> *symbolTable);
-    void Check();
+    Type* Check();
     VarDecl(Identifier *name, Type *type);
 };
 
 class ClassDecl : public Decl 
 {
-  protected:
+
+  public:
     List<Decl*> *members;
     NamedType *extends;
     List<NamedType*> *implements;
-
-  public:
     void Declare(Hashtable<Decl*> *symbolTable);
-    void Check();
+    Type* Check();
     ClassDecl(Identifier *name, NamedType *extends, 
               List<NamedType*> *implements, List<Decl*> *members);
 };
@@ -65,22 +64,21 @@ class InterfaceDecl : public Decl
     
   public:
     void Declare(Hashtable<Decl*> *symbolTable);
-    void Check();
+    Type* Check();
     InterfaceDecl(Identifier *name, List<Decl*> *members);
 };
 
 class FnDecl : public Decl 
 {
-  protected:
+    
+  public:
     List<VarDecl*> *formals;
     Type *returnType;
     Stmt *body;
-    
-  public:
     FnDecl(Identifier *name, Type *returnType, List<VarDecl*> *formals);
     static bool Compare(FnDecl *a, FnDecl* b);
     void Declare(Hashtable<Decl*> *symbolTable);
-    void Check();
+    Type* Check();
     void SetFunctionBody(Stmt *b);
 };
 
