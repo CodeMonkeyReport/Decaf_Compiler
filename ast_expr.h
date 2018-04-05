@@ -43,6 +43,7 @@ class IntConstant : public Expr
     int value;
   
   public:
+    Type* Check();
     IntConstant(yyltype loc, int val);
 };
 
@@ -52,6 +53,7 @@ class DoubleConstant : public Expr
     double value;
     
   public:
+    Type* Check();
     DoubleConstant(yyltype loc, double val);
 };
 
@@ -61,6 +63,7 @@ class BoolConstant : public Expr
     bool value;
     
   public:
+    Type* Check();
     BoolConstant(yyltype loc, bool val);
 };
 
@@ -70,21 +73,21 @@ class StringConstant : public Expr
     char *value;
     
   public:
+    Type* Check();
     StringConstant(yyltype loc, const char *val);
 };
 
 class NullConstant: public Expr 
 {
   public: 
+    Type* Check();
     NullConstant(yyltype loc) : Expr(loc) {}
 };
 
 class Operator : public Node 
-{
-  protected:
-    char tokenString[4];
-    
+{  
   public:
+    char tokenString[4];
     Operator(yyltype loc, const char *tok);
     friend std::ostream& operator<<(std::ostream& out, Operator *o) { return out << o->tokenString; }
  };
@@ -112,12 +115,14 @@ class ArithmeticExpr : public CompoundExpr
 class RelationalExpr : public CompoundExpr 
 {
   public:
+    Type* Check();
     RelationalExpr(Expr *lhs, Operator *op, Expr *rhs) : CompoundExpr(lhs,op,rhs) {}
 };
 
 class EqualityExpr : public CompoundExpr 
 {
   public:
+    Type* Check();
     EqualityExpr(Expr *lhs, Operator *op, Expr *rhs) : CompoundExpr(lhs,op,rhs) {}
     const char *GetPrintNameForNode() { return "EqualityExpr"; }
 };
@@ -125,6 +130,7 @@ class EqualityExpr : public CompoundExpr
 class LogicalExpr : public CompoundExpr 
 {
   public:
+    Type* Check();
     LogicalExpr(Expr *lhs, Operator *op, Expr *rhs) : CompoundExpr(lhs,op,rhs) {}
     LogicalExpr(Operator *op, Expr *rhs) : CompoundExpr(op,rhs) {}
     const char *GetPrintNameForNode() { return "LogicalExpr"; }
@@ -133,6 +139,7 @@ class LogicalExpr : public CompoundExpr
 class AssignExpr : public CompoundExpr 
 {
   public:
+    Type* Check();
     AssignExpr(Expr *lhs, Operator *op, Expr *rhs) : CompoundExpr(lhs,op,rhs) {}
     const char *GetPrintNameForNode() { return "AssignExpr"; }
 };
@@ -140,6 +147,7 @@ class AssignExpr : public CompoundExpr
 class LValue : public Expr 
 {
   public:
+    Type* Check();
     LValue(yyltype loc) : Expr(loc) {}
 };
 
@@ -156,6 +164,7 @@ class ArrayAccess : public LValue
     Expr *base, *subscript;
     
   public:
+    Type* Check();
     ArrayAccess(yyltype loc, Expr *base, Expr *subscript);
 };
 
@@ -197,6 +206,7 @@ class NewExpr : public Expr
     NamedType *cType;
     
   public:
+    Type* Check();
     NewExpr(yyltype loc, NamedType *clsType);
 };
 
@@ -207,18 +217,21 @@ class NewArrayExpr : public Expr
     Type *elemType;
     
   public:
+    Type* Check();
     NewArrayExpr(yyltype loc, Expr *sizeExpr, Type *elemType);
 };
 
 class ReadIntegerExpr : public Expr
 {
   public:
+    Type* Check();
     ReadIntegerExpr(yyltype loc) : Expr(loc) {}
 };
 
 class ReadLineExpr : public Expr
 {
   public:
+    Type* Check();
     ReadLineExpr(yyltype loc) : Expr (loc) {}
 };
 

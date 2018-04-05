@@ -18,18 +18,39 @@ Type* Expr::Check()
 IntConstant::IntConstant(yyltype loc, int val) : Expr(loc) {
     value = val;
 }
+Type* IntConstant::Check()
+{
+    return Type::intType;
+}
 
 DoubleConstant::DoubleConstant(yyltype loc, double val) : Expr(loc) {
     value = val;
+}
+Type* DoubleConstant::Check()
+{
+    return Type::doubleType;
 }
 
 BoolConstant::BoolConstant(yyltype loc, bool val) : Expr(loc) {
     value = val;
 }
+Type* BoolConstant::Check()
+{
+    return Type::boolType;
+}
 
 StringConstant::StringConstant(yyltype loc, const char *val) : Expr(loc) {
     Assert(val != NULL);
     value = strdup(val);
+}
+Type* StringConstant::Check()
+{
+    return Type::stringType;
+}
+
+Type* NullConstant::Check()
+{
+    return Type::nullType;
 }
 
 Operator::Operator(yyltype loc, const char *tok) : Node(loc) {
@@ -45,7 +66,7 @@ CompoundExpr::CompoundExpr(Expr *l, Operator *o, Expr *r)
 }
 Type* CompoundExpr::Check()
 {
-    return NULL;
+    return NULL; // TODO
 }
 
 CompoundExpr::CompoundExpr(Operator *o, Expr *r) 
@@ -56,15 +77,101 @@ CompoundExpr::CompoundExpr(Operator *o, Expr *r)
     (right=r)->SetParent(this);
 }
 
+Type* EqualityExpr::Check()
+{
+    Type* lhsType = this->left->Check();
+    Type* rhsType = this->right->Check();
+    
+    if (lhsType->IsEquivalentTo(Type::errorType) || rhsType->IsEquivalentTo(Type::errorType))
+    {
+        return Type::errorType;
+    }
+    if (!lhsType->IsEquivalentTo(rhsType))
+    {
+        ReportError::IncompatibleOperands(this->op, lhsType, rhsType);
+        return Type::errorType;
+    }
+    return Type::boolType; // TODO
+}
+
+Type* LogicalExpr::Check()
+{
+    return Type::boolType;
+}
+
 Type* ArithmeticExpr::Check()
 {
-    // This one will need to be updated.
-    return NULL;
+    if (this->left == NULL) // Unary operation
+    {
+        Type* opType = this->right->Check();
+        if (opType->IsEquivalentTo(Type::doubleType))
+        {
+            return Type::doubleType;
+        }
+        else if (opType->IsEquivalentTo(Type::intType))
+        {
+            return Type::intType;
+        }
+        else
+        {
+            ReportError::IncompatibleOperand(this->op, opType);
+            return Type::intType;
+        }
+
+    }
+    else // Binary operation
+    {
+        Type* lhsType = this->left->Check();
+        Type* rhsType = this->right->Check();
+
+        if (lhsType->IsEquivalentTo(Type::errorType) || rhsType->IsEquivalentTo(Type::errorType))
+        {
+            return Type::errorType;
+        }
+        if (!lhsType->IsEquivalentTo(rhsType))
+        {
+            ReportError::IncompatibleOperands(this->op, lhsType, rhsType);
+            return Type::errorType;
+        }
+        return lhsType;
+    }
 }
-  
+
+Type* RelationalExpr::Check()
+{
+    return Type::boolType; // TODO
+}
+
+Type* AssignExpr::Check()
+{
+    Type* lhsType = this->left->Check();
+    Type* rhsType = this->right->Check();
+
+    if (lhsType->IsEquivalentTo(Type::doubleType) && rhsType->IsEquivalentTo(Type::intType))
+    {
+        return Type::doubleType;
+    }
+
+    if (lhsType->IsEquivalentTo(Type::errorType) || rhsType->IsEquivalentTo(Type::errorType))
+    {
+        return Type::errorType;
+    }
+
+    if (!lhsType->IsEquivalentTo(rhsType))
+    {
+        ReportError::IncompatibleOperands(this->op, lhsType, rhsType);
+        return Type::errorType;
+    }
+    return lhsType;
+}
+
 ArrayAccess::ArrayAccess(yyltype loc, Expr *b, Expr *s) : LValue(loc) {
     (base=b)->SetParent(this); 
     (subscript=s)->SetParent(this);
+}
+Type* ArrayAccess::Check()
+{
+    return Type::voidType; // TODO
 }
      
 FieldAccess::FieldAccess(Expr *b, Identifier *f) 
@@ -87,11 +194,15 @@ Type* FieldAccess::Check()
         Decl* source = this->FindDecl(this->field->name);
         VarDecl* varSource = dynamic_cast<VarDecl*>(source);
         if (varSource == NULL)
-            return NULL;
+            return Type::voidType;
         return varSource->type;
     }
 }
 
+Type* LValue::Check()
+{
+    return Type::voidType;
+}
 
 Call::Call(yyltype loc, Expr *b, Identifier *f, List<Expr*> *a) : Expr(loc)  {
     Assert(f != NULL && a != NULL); // b can be be NULL (just means no explicit base)
@@ -170,12 +281,27 @@ NewExpr::NewExpr(yyltype loc, NamedType *c) : Expr(loc) {
   Assert(c != NULL);
   (cType=c)->SetParent(this);
 }
-
+Type* NewExpr::Check()
+{
+    return Type::voidType; // TODO
+}
 
 NewArrayExpr::NewArrayExpr(yyltype loc, Expr *sz, Type *et) : Expr(loc) {
     Assert(sz != NULL && et != NULL);
     (size=sz)->SetParent(this); 
     (elemType=et)->SetParent(this);
 }
+Type* NewArrayExpr::Check()
+{
+    return Type::voidType; // TODO
+}
 
-       
+Type* ReadLineExpr::Check()
+{
+    return Type::stringType;
+}
+
+Type* ReadIntegerExpr::Check()
+{
+    return Type::intType;
+}

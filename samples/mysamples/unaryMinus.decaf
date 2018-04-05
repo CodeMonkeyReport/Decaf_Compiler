@@ -1,0 +1,9 @@
+int a;
+bool b;
+double d;
+
+void myFunc()
+{
+    a = -1;
+    a = -true;
+}
