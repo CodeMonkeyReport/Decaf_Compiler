@@ -32,6 +32,11 @@ Type* Type::Check()
 {
     return NULL;
 }
+Hashtable<Decl*>* Type::GetMembers()
+{
+    return NULL;
+}
+
 
 
 NamedType::NamedType(Identifier *i) : Type(*i->GetLocation()) {
@@ -48,7 +53,7 @@ Type* NamedType::Check()
     }
     return NULL;
 }
-Hashtable<Decl*> NamedType::GetMembers()
+Hashtable<Decl*>* NamedType::GetMembers()
 {
     Decl* origin = this->FindDecl(this->id->name);
     return origin->symbolTable;
@@ -71,7 +76,7 @@ Type* ArrayType::Check()
     this->elemType->Check();
     return NULL;
 }
-Hashtable<Decl*> ArrayType::GetMembers()
+Hashtable<Decl*>* ArrayType::GetMembers()
 {
     return this->symbolTable;
 }

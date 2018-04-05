@@ -24,7 +24,7 @@ class Type : public Node
     char *typeName;
     static Type *intType, *doubleType, *boolType, *voidType,
                 *nullType, *stringType, *errorType;
-    virtual Hashtable<Decl*> GetMembers();
+    virtual Hashtable<Decl*>* GetMembers();
     Type(yyltype loc) : Node(loc) {}
     Type(const char *str);
     virtual Type* Check();
@@ -40,7 +40,7 @@ class NamedType : public Type
     Identifier *id;
     NamedType(Identifier *i);
     Type* Check();
-    virtual Hashtable<Decl*> GetMembers();
+    virtual Hashtable<Decl*>* GetMembers();
     void PrintToStream(std::ostream& out) { out << id; }
     bool IsEquivalentTo(Type *other)
     {
@@ -61,7 +61,7 @@ class ArrayType : public Type
   public:
     Type *elemType;
     ArrayType(yyltype loc, Type *elemType);
-    virtual Hashtable<Decl*> GetMembers();
+    virtual Hashtable<Decl*>* GetMembers();
     Type* Check();
     void PrintToStream(std::ostream& out) { out << elemType << "[]"; }
     bool IsEquivalentTo(Type *other) 

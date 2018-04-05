@@ -80,12 +80,15 @@ Type* FieldAccess::Check()
     if (this->base != NULL)
     {
         Type* baseType = this->base->Check();
-        
+        return baseType;
     }
     else
     {
-    Decl* source = this->FindDecl(this->field->name);
-
+        Decl* source = this->FindDecl(this->field->name);
+        VarDecl* varSource = dynamic_cast<VarDecl*>(source);
+        if (varSource == NULL)
+            return NULL;
+        return varSource->type;
     }
 }
 
