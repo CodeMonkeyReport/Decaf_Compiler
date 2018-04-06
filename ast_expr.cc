@@ -176,10 +176,6 @@ Type* AssignExpr::Check()
     Type* lhsType = this->left->Check();
     Type* rhsType = this->right->Check();
 
-    if (lhsType->IsEquivalentTo(Type::doubleType) && rhsType->IsEquivalentTo(Type::intType))
-    {
-        return Type::doubleType;
-    }
     if (lhsType->IsEquivalentTo(Type::errorType) || rhsType->IsEquivalentTo(Type::errorType))
     {
         return Type::errorType;
@@ -228,14 +224,54 @@ Type* FieldAccess::Check()
     if (this->base != NULL)
     {
         Type* baseType = this->base->Check(); // Here we will need to look for the types symbol table TODO
-        return baseType;
+        NamedType* baseNamedType = dynamic_cast<NamedType*>(baseType); // One of these will be null OR both of them will
+        ArrayType* baseArrayType = dynamic_cast<ArrayType*>(baseType);
+        if (baseNamedType != NULL)
+        {
+            Decl* baseTypeDecl = this->FindDecl(baseNamedType->id->name); // Used to get the declare of the type
+            Decl* fieldDecl = baseTypeDecl->symbolTable->Lookup(this->field->name);
+            FnDecl* fnFieldDecl = dynamic_cast<FnDecl*>(fieldDecl);
+
+            if (fieldDecl == NULL)
+            {
+                ReportError::FieldNotFoundInBase(this->field, baseNamedType);
+                return Type::errorType;
+            }
+            else if (fnFieldDecl == NULL)
+            {
+                ReportError::InaccessibleField(this->field, baseType);
+                return Type::errorType;
+            }
+            return baseType;
+
+        }
+        else if (baseArrayType != NULL) // Its an array type
+        {
+            Decl* fieldDecl = baseArrayType->symbolTable->Lookup(this->field->name);
+            FnDecl* fnFieldDecl = dynamic_cast<FnDecl*>(fieldDecl);
+
+            if (fnFieldDecl == NULL)
+            {
+                ReportError::FieldNotFoundInBase(this->field, baseType);
+                return Type::errorType;
+            }
+            return baseType;
+        }
+        else // Its a primitive type
+        {
+            ReportError::FieldNotFoundInBase(this->field, baseType);
+            return Type::errorType;
+        }
     }
     else
     {
         Decl* source = this->FindDecl(this->field->name);
         VarDecl* varSource = dynamic_cast<VarDecl*>(source);
         if (varSource == NULL)
+        {
+            ReportError::IdentifierNotDeclared(this->field, LookingForVariable);
             return Type::voidType;
+        }
         return varSource->type;
     }
 }
@@ -259,7 +295,7 @@ Type* Call::Check()
     if (this->base != NULL)
     {
         Type* baseType = this->base->Check();
-        if (baseType == NULL)
+        if (baseType->IsEquivalentTo(Type::errorType))
             return Type::errorType;
 
         Decl* baseDecl = this->FindDecl(baseType->typeName);
@@ -280,6 +316,9 @@ Type* Call::Check()
         else if(foundDeclare == NULL && foundFunctionDeclare == NULL)
         {
             ReportError::FieldNotFoundInBase(this->field, baseType);
+            for (int i = 0; i < this->actuals->NumElements(); i++) // Check actuals before returning after error
+                this->actuals->Nth(i)->Check();
+
             return Type::errorType;
         }
     }
@@ -290,7 +329,29 @@ Type* Call::Check()
         if (foundFunctionDeclare == NULL)
         {
             ReportError::IdentifierNotDeclared(this->field, LookingForFunction);
+            for (int i = 0; i < this->actuals->NumElements(); i++) // Check actuals before returning after error
+                this->actuals->Nth(i)->Check();
             return Type::errorType;
+        }
+    }
+    int expectedArgCnt = foundFunctionDeclare->formals->NumElements();
+    int givenArgCnt = this->actuals->NumElements();
+    if (expectedArgCnt != givenArgCnt)
+    {
+        ReportError::NumArgsMismatch(this->field, expectedArgCnt, givenArgCnt);
+        for (int i = 0; i < this->actuals->NumElements(); i++) // Check actuals before returning after error
+            this->actuals->Nth(i)->Check();
+
+        return foundFunctionDeclare->returnType;
+    }
+    for (int i = 0; i < foundFunctionDeclare->formals->NumElements(); i++)
+    {
+        Type* actualsType = this->actuals->Nth(i)->Check();
+        if (!foundFunctionDeclare->formals->Nth(i)->type->IsEquivalentTo(actualsType))
+        {
+            if (actualsType->IsEquivalentTo(Type::errorType))
+                continue;
+            ReportError::ArgMismatch(this->actuals->Nth(i), i, actualsType, foundFunctionDeclare->formals->Nth(i)->type);
         }
     }
     return foundFunctionDeclare->returnType;

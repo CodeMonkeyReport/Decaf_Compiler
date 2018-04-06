@@ -33,9 +33,8 @@ class Type : public Node
     virtual bool IsEquivalentTo(Type *other) { return this == other; }
 };
 
-class NamedType : public Type 
+class NamedType : public Type
 {
-    
   public:
     Identifier *id;
     NamedType(Identifier *i);

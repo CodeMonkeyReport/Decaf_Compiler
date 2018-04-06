@@ -6,6 +6,7 @@
 #include "ast_type.h"
 #include "ast_decl.h"
 #include "ast_expr.h"
+#include "errors.h"
 
 Program::Program(List<Decl*> *d) {
     Assert(d != NULL);
@@ -84,10 +85,15 @@ Type* ForStmt::Check()
     if (this->checked)
         return Type::voidType;
     this->checked = true;
-    this->init->Check();
-    this->test->Check();
-    this->step->Check();
-    this->body->Check();
+
+    this->init->Check(); // Dont care what the type of init is
+    Type* testType = this->test->Check(); // Test should be bool
+    if (!testType->IsEquivalentTo(Type::boolType))
+    {
+        ReportError::TestNotBoolean(this->test);
+    }
+    this->step->Check(); // Doesn't matter what type step is
+    this->body->Check(); // Same with body
     return Type::voidType;
 }
 
@@ -98,6 +104,23 @@ Type* LoopStmt::Check()
 
 Type* BreakStmt::Check()
 {
+    LoopStmt *foundLoopStmt;
+    bool loopStmtWasFound = false;
+    Node* p;
+    // Traverse through the parse tree to find loop declaration
+    for (p = this->parent; p != NULL; p = p->parent)
+    {
+        foundLoopStmt = dynamic_cast<LoopStmt*>(p);
+        if (foundLoopStmt != NULL)
+        {
+            loopStmtWasFound = true;
+            break;
+        }
+    }
+    if (!loopStmtWasFound)
+    {
+        ReportError::BreakOutsideLoop(this);
+    }
     return Type::voidType;
 }
 
@@ -106,7 +129,12 @@ Type* WhileStmt::Check()
     if (this->checked)
         return Type::voidType;
     this->checked = true;
-    this->test->Check();
+
+    Type* testType = this->test->Check(); // Test should be bool
+    if (!testType->IsEquivalentTo(Type::boolType))
+    {
+        ReportError::TestNotBoolean(this->test);
+    }
     this->body->Check();
     return Type::voidType; // statements are void
 }
@@ -119,15 +147,20 @@ IfStmt::IfStmt(Expr *t, Stmt *tb, Stmt *eb): ConditionalStmt(t, tb) {
 }
 Type* IfStmt::Check()
 {
-    this->test->Check();
+    Type* testType = this->test->Check();
     this->body->Check();
+
+    if (!testType->IsEquivalentTo(Type::boolType) && !testType->IsEquivalentTo(Type::errorType))
+    {
+        ReportError::TestNotBoolean(this->test);
+    }
 
     if(this->elseBody)
         this->elseBody->Check();
     return Type::voidType;
 }
 
-ReturnStmt::ReturnStmt(yyltype loc, Expr *e) : Stmt(loc) { 
+ReturnStmt::ReturnStmt(yyltype loc, Expr *e) : Stmt(loc) {
     Assert(e != NULL);
     this->checked = false;
     (expr=e)->SetParent(this);
@@ -137,7 +170,28 @@ Type* ReturnStmt::Check()
     if (this->checked)
         return Type::voidType;
     this->checked = true;
-    this->expr->Check();
+    bool functionDeclareWasFound;
+    FnDecl* foundFuncDeclare;
+    Node* p;
+    // Traverse through the parse tree to find func declaration
+    for (p = this->parent; p != NULL; p = p->parent)
+    {
+        foundFuncDeclare = dynamic_cast<FnDecl*>(p);
+        if (foundFuncDeclare != NULL)
+        {
+            functionDeclareWasFound = true;
+            break;
+        }
+    }
+    if (functionDeclareWasFound) // There should be no situation where we have a return outside a func
+    {
+        Type* retExprType = this->expr->Check();
+        if (!retExprType->IsEquivalentTo(foundFuncDeclare->returnType))
+        {
+            ReportError::ReturnMismatch(this, retExprType, foundFuncDeclare->returnType);
+            return Type::voidType;
+        }
+    }
     return Type::voidType;
 }
   

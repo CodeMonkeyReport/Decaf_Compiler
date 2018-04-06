@@ -30,6 +30,9 @@ Decl *Node::FindDecl(const char *name)
     Hashtable<Decl*> *currentScope;
     Node *p = this;
 
+    if (name == NULL)
+        return NULL;
+
     while (p != NULL)
     {
         currentScope = p->symbolTable;

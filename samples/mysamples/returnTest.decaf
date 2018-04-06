@@ -1,0 +1,10 @@
+int myFunction()
+{
+    int a;
+    string s;
+
+    s = ReadInteger();
+    a = ReadLine();
+
+    return s;
+}

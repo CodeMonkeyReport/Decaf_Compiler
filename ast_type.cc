@@ -30,18 +30,17 @@ Type::Type(const char *n) {
 }
 Type* Type::Check()
 {
-    return NULL;
+    return this;
 }
 Hashtable<Decl*>* Type::GetMembers()
 {
     return NULL;
 }
 
-
-
 NamedType::NamedType(Identifier *i) : Type(*i->GetLocation()) {
     Assert(i != NULL);
     (id=i)->SetParent(this);
+    this->typeName = i->name;
 }
 Type* NamedType::Check()
 {
@@ -74,7 +73,7 @@ ArrayType::ArrayType(yyltype loc, Type *et) : Type(loc) {
 Type* ArrayType::Check()
 {
     this->elemType->Check();
-    return NULL;
+    return this;
 }
 Hashtable<Decl*>* ArrayType::GetMembers()
 {
