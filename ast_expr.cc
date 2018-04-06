@@ -66,7 +66,7 @@ CompoundExpr::CompoundExpr(Expr *l, Operator *o, Expr *r)
 }
 Type* CompoundExpr::Check()
 {
-    return NULL; // TODO
+    return Type::errorType; // This code should never be called, it is a placeholder
 }
 
 CompoundExpr::CompoundExpr(Operator *o, Expr *r) 
@@ -79,7 +79,7 @@ CompoundExpr::CompoundExpr(Operator *o, Expr *r)
 
 Type* EqualityExpr::Check()
 {
-    Type* lhsType = this->left->Check();
+    Type* lhsType = this->left->Check(); // Types of lefthand side and righthand side
     Type* rhsType = this->right->Check();
     
     if (lhsType->IsEquivalentTo(Type::errorType) || rhsType->IsEquivalentTo(Type::errorType))
@@ -91,11 +91,40 @@ Type* EqualityExpr::Check()
         ReportError::IncompatibleOperands(this->op, lhsType, rhsType);
         return Type::errorType;
     }
-    return Type::boolType; // TODO
+    return Type::boolType;
 }
 
 Type* LogicalExpr::Check()
 {
+    if (this->left == NULL) // Unary operation
+    {
+        Type* opType = this->right->Check(); // This should always be a bool
+        if (opType->IsEquivalentTo(Type::errorType))
+        {
+            return Type::errorType;
+        }
+
+        if (!opType->IsEquivalentTo(Type::boolType))
+        {
+            ReportError::IncompatibleOperand(this->op, opType);
+            return Type::errorType;
+        }
+    }
+    else // Binary operation
+    {
+        Type* lhsType = this->left->Check();
+        Type* rhsType = this->right->Check();
+
+        if (lhsType->IsEquivalentTo(Type::errorType) || rhsType->IsEquivalentTo(Type::errorType))
+        {
+            return Type::errorType;
+        }
+        if (!lhsType->IsEquivalentTo(Type::boolType) || !rhsType->IsEquivalentTo(Type::boolType))
+        {
+            ReportError::IncompatibleOperands(this->op, lhsType, rhsType);
+            return Type::errorType;
+        }
+    }
     return Type::boolType;
 }
 
@@ -151,7 +180,6 @@ Type* AssignExpr::Check()
     {
         return Type::doubleType;
     }
-
     if (lhsType->IsEquivalentTo(Type::errorType) || rhsType->IsEquivalentTo(Type::errorType))
     {
         return Type::errorType;
@@ -171,7 +199,20 @@ ArrayAccess::ArrayAccess(yyltype loc, Expr *b, Expr *s) : LValue(loc) {
 }
 Type* ArrayAccess::Check()
 {
-    return Type::voidType; // TODO
+    Type* subscriptType = this->subscript->Check();
+    Type* baseType = this->base->Check();
+    ArrayType* arrayType = dynamic_cast<ArrayType*>(baseType);
+    if (arrayType == NULL)
+    {
+        ReportError::BracketsOnNonArray(this->base);
+        return Type::errorType;
+    }
+    if (!subscriptType->IsEquivalentTo(Type::intType)) // Non int subscript is not allowed
+    {
+        ReportError::SubscriptNotInteger(this->subscript);
+    }
+    
+    return arrayType->elemType;
 }
      
 FieldAccess::FieldAccess(Expr *b, Identifier *f) 
@@ -186,7 +227,7 @@ Type* FieldAccess::Check()
     // If the base is not null then there was a '.' access
     if (this->base != NULL)
     {
-        Type* baseType = this->base->Check();
+        Type* baseType = this->base->Check(); // Here we will need to look for the types symbol table TODO
         return baseType;
     }
     else
@@ -199,7 +240,7 @@ Type* FieldAccess::Check()
     }
 }
 
-Type* LValue::Check()
+Type* LValue::Check() // This method will never be called, it is here as a placeholder.
 {
     return Type::voidType;
 }
@@ -217,15 +258,15 @@ Type* Call::Check()
     FnDecl* foundFunctionDeclare;
     if (this->base != NULL)
     {
-        // Problem is we're not getting the class correclty here
         Type* baseType = this->base->Check();
         if (baseType == NULL)
-            return NULL;
+            return Type::errorType;
 
         Decl* baseDecl = this->FindDecl(baseType->typeName);
         ClassDecl* baseClassDecl = dynamic_cast<ClassDecl*>(baseDecl);
         if (baseClassDecl == NULL)
-            return NULL;
+            return Type::errorType;
+
         foundDeclare = baseClassDecl->symbolTable->Lookup(this->field->name);
         foundFunctionDeclare = dynamic_cast<FnDecl*>(foundDeclare);
 
@@ -233,13 +274,13 @@ Type* Call::Check()
         if (foundDeclare != NULL && foundFunctionDeclare == NULL)
         {
             ReportError::InaccessibleField(this->field, baseType);
-            return NULL;
+            return Type::errorType;
         }
         // There is no member with that name in the class
         else if(foundDeclare == NULL && foundFunctionDeclare == NULL)
         {
             ReportError::FieldNotFoundInBase(this->field, baseType);
-            return NULL;
+            return Type::errorType;
         }
     }
     else
@@ -249,7 +290,7 @@ Type* Call::Check()
         if (foundFunctionDeclare == NULL)
         {
             ReportError::IdentifierNotDeclared(this->field, LookingForFunction);
-            return NULL;
+            return Type::errorType;
         }
     }
     return foundFunctionDeclare->returnType;
@@ -261,7 +302,7 @@ Type* This::Check()
     ClassDecl* check;
     bool foundClassDeclare = false;
 
-    for (p = this->parent; p != NULL; p = p->parent)
+    for (p = this->parent; p != NULL; p = p->parent) // Traverse through the parse tree to find class declaration
     {
         check = dynamic_cast<ClassDecl*>(p);
         if (check != NULL)
@@ -273,6 +314,7 @@ Type* This::Check()
     if (foundClassDeclare == false)
     {
         ReportError::ThisOutsideClassScope(this);
+        return Type::errorType;
     }
     return new NamedType(check->id);
 }
@@ -283,17 +325,24 @@ NewExpr::NewExpr(yyltype loc, NamedType *c) : Expr(loc) {
 }
 Type* NewExpr::Check()
 {
-    return Type::voidType; // TODO
+    Type* createdType = this->cType->Check();
+    return createdType; // TODO
 }
 
 NewArrayExpr::NewArrayExpr(yyltype loc, Expr *sz, Type *et) : Expr(loc) {
     Assert(sz != NULL && et != NULL);
     (size=sz)->SetParent(this); 
     (elemType=et)->SetParent(this);
+    this->type = new ArrayType(loc, et);
 }
 Type* NewArrayExpr::Check()
 {
-    return Type::voidType; // TODO
+    Type* szType = this->size->Check();
+    if (!szType->IsEquivalentTo(Type::intType))
+    {
+        ReportError::NewArraySizeNotInteger(this->size);
+    }
+    return this->type;
 }
 
 Type* ReadLineExpr::Check()

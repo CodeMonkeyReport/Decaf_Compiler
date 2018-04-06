@@ -217,6 +217,7 @@ class NewArrayExpr : public Expr
     Type *elemType;
     
   public:
+    Type* type;
     Type* Check();
     NewArrayExpr(yyltype loc, Expr *sizeExpr, Type *elemType);
 };

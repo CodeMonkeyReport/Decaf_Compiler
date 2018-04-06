@@ -1,0 +1,8 @@
+
+
+void myFunc()
+{
+    int[] a;
+
+    a = NewArray(3, double);
+}

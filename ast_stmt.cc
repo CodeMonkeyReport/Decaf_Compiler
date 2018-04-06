@@ -30,7 +30,7 @@ Type* Program::Check() {
     {
         this->decls->Nth(i)->Check();
     }
-    return NULL;
+    return Type::voidType;
 }
 
 StmtBlock::StmtBlock(List<VarDecl*> *d, List<Stmt*> *s) {
@@ -43,7 +43,7 @@ StmtBlock::StmtBlock(List<VarDecl*> *d, List<Stmt*> *s) {
 Type* StmtBlock::Check()
 {
     if (this->checked)
-        return NULL;
+        return Type::voidType;
     this->checked = true;
     for (int i = 0; i < this->decls->NumElements(); i++)
     {
@@ -59,7 +59,7 @@ Type* StmtBlock::Check()
     {
         this->stmts->Nth(i)->Check();
     }
-    return NULL;
+    return Type::voidType;
 }
 
 ConditionalStmt::ConditionalStmt(Expr *t, Stmt *b) { 
@@ -70,7 +70,7 @@ ConditionalStmt::ConditionalStmt(Expr *t, Stmt *b) {
 }
 Type* ConditionalStmt::Check()
 {
-    return NULL;
+    return Type::voidType;
 }
 
 ForStmt::ForStmt(Expr *i, Expr *t, Expr *s, Stmt *b): LoopStmt(t, b) { 
@@ -82,33 +82,33 @@ ForStmt::ForStmt(Expr *i, Expr *t, Expr *s, Stmt *b): LoopStmt(t, b) {
 Type* ForStmt::Check()
 {
     if (this->checked)
-        return NULL;
+        return Type::voidType;
     this->checked = true;
     this->init->Check();
     this->test->Check();
     this->step->Check();
     this->body->Check();
-    return NULL;
+    return Type::voidType;
 }
 
 Type* LoopStmt::Check()
 {
-    return NULL;
+    return Type::voidType;
 }
 
 Type* BreakStmt::Check()
 {
-    return NULL;
+    return Type::voidType;
 }
 
 Type* WhileStmt::Check()
 {
     if (this->checked)
-        return NULL;
+        return Type::voidType;
     this->checked = true;
     this->test->Check();
     this->body->Check();
-    return NULL;
+    return Type::voidType; // statements are void
 }
 
 IfStmt::IfStmt(Expr *t, Stmt *tb, Stmt *eb): ConditionalStmt(t, tb) { 
@@ -124,7 +124,7 @@ Type* IfStmt::Check()
 
     if(this->elseBody)
         this->elseBody->Check();
-    return NULL;
+    return Type::voidType;
 }
 
 ReturnStmt::ReturnStmt(yyltype loc, Expr *e) : Stmt(loc) { 
@@ -135,10 +135,10 @@ ReturnStmt::ReturnStmt(yyltype loc, Expr *e) : Stmt(loc) {
 Type* ReturnStmt::Check()
 {
     if (this->checked)
-        return NULL;
+        return Type::voidType;
     this->checked = true;
     this->expr->Check();
-    return NULL;
+    return Type::voidType;
 }
   
 PrintStmt::PrintStmt(List<Expr*> *a) {    
@@ -149,11 +149,11 @@ PrintStmt::PrintStmt(List<Expr*> *a) {
 Type* PrintStmt::Check()
 {
     if (this->checked)
-        return NULL;
+        return Type::voidType;
     this->checked = true;
     for (int i = 0; i < this->args->NumElements(); i++)
     {
         this->args->Nth(i)->Check();
     }
-    return NULL;
+    return Type::voidType;
 }
