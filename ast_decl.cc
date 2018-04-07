@@ -23,6 +23,9 @@ VarDecl::VarDecl(Identifier *n, Type *t) : Decl(n) {
 }
 void VarDecl::Declare(Hashtable<Decl*> *symbolTable)
 {
+    if (this->checked)
+        return;
+    this->checked = true;
     this->type->Check();
     Decl* previousDeclare = symbolTable->Lookup(this->id->name);
     if (previousDeclare != NULL)
@@ -110,6 +113,7 @@ Type* ClassDecl::Check()
                     ReportError::OverrideMismatch(localImpl);
                 }
                 this->symbolTable->Enter(val->id->name, val);
+                // val->Declare(this->symbolTable);
             }
         }
     }

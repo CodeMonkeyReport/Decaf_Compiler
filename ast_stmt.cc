@@ -186,7 +186,9 @@ Type* ReturnStmt::Check()
     if (functionDeclareWasFound) // There should be no situation where we have a return outside a func
     {
         Type* retExprType = this->expr->Check();
-        if (!retExprType->IsEquivalentTo(foundFuncDeclare->returnType))
+        if (!retExprType->IsEquivalentTo(foundFuncDeclare->returnType) && 
+            !retExprType->IsEquivalentTo(Type::errorType) &&
+            !foundFuncDeclare->returnType->CanBeCastTo(retExprType))
         {
             ReportError::ReturnMismatch(this, retExprType, foundFuncDeclare->returnType);
             return Type::voidType;
@@ -207,7 +209,13 @@ Type* PrintStmt::Check()
     this->checked = true;
     for (int i = 0; i < this->args->NumElements(); i++)
     {
-        this->args->Nth(i)->Check();
+        Type* argType = this->args->Nth(i)->Check();
+
+        if (argType->IsEquivalentTo(Type::errorType))
+            continue;
+
+        if (!argType->IsEquivalentTo(Type::boolType) && !argType->IsEquivalentTo(Type::intType) && !argType->IsEquivalentTo(Type::stringType))
+            ReportError::PrintArgMismatch(this->args->Nth(i), i+1, argType);
     }
     return Type::voidType;
 }

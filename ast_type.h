@@ -15,7 +15,8 @@
 #include "ast.h"
 #include "list.h"
 #include <iostream>
-
+#include <typeinfo>
+#include "ast_decl.h"
 
 class Type : public Node 
 {
@@ -30,7 +31,11 @@ class Type : public Node
     virtual Type* Check();
     virtual void PrintToStream(std::ostream& out) { out << typeName; }
     friend std::ostream& operator<<(std::ostream& out, Type *t) { t->PrintToStream(out); return out; }
-    virtual bool IsEquivalentTo(Type *other) { return this == other; }
+    virtual bool IsEquivalentTo(Type *other) 
+    { 
+      return this == other; 
+    }
+    virtual bool CanBeCastTo(Type *other) { return false; }
 };
 
 class NamedType : public Type
@@ -43,6 +48,9 @@ class NamedType : public Type
     void PrintToStream(std::ostream& out) { out << id; }
     bool IsEquivalentTo(Type *other)
     {
+      if (other == Type::nullType)
+        return true;
+
       NamedType* n = dynamic_cast<NamedType*>(other);
       if (n == NULL)
         return false;
@@ -50,6 +58,29 @@ class NamedType : public Type
       if (strcmp(n->id->name, this->id->name) == 0)
       {
         return true;
+      }
+      return false;
+    }
+    bool CanBeCastTo(Type *other)
+    {
+      // assume the two are not equal at this point, 
+      // otherwise this function would not be called.
+      if (other == Type::nullType)
+        return true;
+
+      Decl* otherDecl = this->FindDecl(other->typeName);
+      ClassDecl* otherClassDecl = dynamic_cast<ClassDecl*>(otherDecl);
+      if (otherClassDecl != NULL)
+      {
+        // In this case other must be a class
+        for (int i = 0; i < otherClassDecl->implements->NumElements(); i++)
+        {
+          if (otherClassDecl->implements->Nth(i)->IsEquivalentTo(this))
+            return true;
+        }
+        if (otherClassDecl->extends != NULL && (otherClassDecl->extends->IsEquivalentTo(this) ||
+                                                this->CanBeCastTo(otherClassDecl->extends)) )
+          return true;
       }
       return false;
     }
@@ -71,6 +102,7 @@ class ArrayType : public Type
 
       return this->elemType->IsEquivalentTo(o->elemType);
     }
+    bool CanBeCastTo(Type *other) { return false; }
 };
 
  

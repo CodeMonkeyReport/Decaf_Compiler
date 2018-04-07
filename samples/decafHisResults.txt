@@ -1,0 +1,476 @@
+--------------------------------------------------------------
+samples/bad10.decaf
+
+*** Error line 1.
+Unknown g;
+^^^^^^^
+*** No declaration found for type 'Unknown'
+
+
+*** Error line 5.
+   var = New(Missing);
+   ^^^
+*** No declaration found for variable 'var'
+
+
+*** Error line 5.
+   var = New(Missing);
+             ^^^^^^^
+*** No declaration found for class 'Missing'
+
+samples/bad11.decaf
+
+*** Error line 7.
+    void ToString(string s) {}
+         ^^^^^^^^
+*** Method 'ToString' must match inherited type signature
+
+
+*** Error line 6.
+class Number implements Printable {
+                        ^^^^^^^^^
+*** Class 'Number' does not implement entire interface 'Printable'
+
+
+*** Error line 14.
+     n = p;
+       ^
+*** Incompatible operands: Number = Printable
+
+samples/bad12.decaf
+
+*** Error line 2.
+class Cow extends Animal {}
+                  ^^^^^^
+*** No declaration found for class 'Animal'
+
+
+*** Error line 4.
+class Wacky implements Trick, Treat, Halloween {
+                       ^^^^^
+*** No declaration found for interface 'Trick'
+
+
+*** Error line 4.
+class Wacky implements Trick, Treat, Halloween {
+                                     ^^^^^^^^^
+*** No declaration found for interface 'Halloween'
+
+
+*** Error line 12.
+  B b;
+  ^
+*** No declaration found for type 'B'
+
+
+*** Error line 13.
+  Trick c;
+  ^^^^^
+*** No declaration found for type 'Trick'
+
+
+*** Error line 15.
+  New(A);
+      ^
+*** No declaration found for class 'A'
+
+
+*** Error line 16.
+  New(Treat);
+      ^^^^^
+*** No declaration found for class 'Treat'
+
+
+*** Error line 17.
+  NewArray(10, Trick);
+               ^^^^^
+*** No declaration found for type 'Trick'
+
+samples/bad1.decaf
+
+*** Error line 6.
+  y = x - 3.5;
+        ^
+*** Incompatible operands: int - double
+
+samples/bad2.decaf
+
+*** Error line 7.
+  x = b;
+    ^
+*** Incompatible operands: int = bool
+
+
+*** Error line 9.
+  x = 4 + 1.0 / 5 * 3;
+              ^
+*** Incompatible operands: double / int
+
+samples/bad3.decaf
+
+*** Error line 8.
+    num[1] = 2;
+    ^^^
+*** [] can only be applied to arrays
+
+
+*** Error line 11.
+  arr = NewArray(5, Binky);
+      ^
+*** Incompatible operands: double[] = Binky[]
+
+
+*** Error line 13.
+  arr[1.5] = 1.5;
+      ^^^
+*** Array subscript must be an integer
+
+
+*** Error line 14.
+  NewArray("hello", string);
+           ^^^^^^^
+*** Size for NewArray must be an integer
+
+samples/bad4.decaf
+
+*** Error line 9.
+  blue = this;
+         ^^^^
+*** 'this' is only valid within class scope
+
+
+*** Error line 11.
+  blue.color = 10;
+       ^^^^^
+*** Crayon field 'color' only accessible within class scope
+
+
+*** Error line 12.
+  pens.color = 5;
+       ^^^^^
+*** int[] has no such field 'color'
+
+samples/bad5.decaf
+
+*** Error line 2.
+   void Meet() { FindTime(); }
+                 ^^^^^^^^
+*** No declaration found for function 'FindTime'
+
+
+*** Error line 7.
+   nico = trish + katie;
+   ^^^^
+*** No declaration found for variable 'nico'
+
+
+*** Error line 7.
+   nico = trish + katie;
+          ^^^^^
+*** No declaration found for variable 'trish'
+
+
+*** Error line 7.
+   nico = trish + katie;
+                  ^^^^^
+*** No declaration found for variable 'katie'
+
+
+*** Error line 8.
+   cheryl();
+   ^^^^^^
+*** No declaration found for function 'cheryl'
+
+
+*** Error line 9.
+   tbc.Meeting(caroline);
+               ^^^^^^^^
+*** No declaration found for variable 'caroline'
+
+
+*** Error line 9.
+   tbc.Meeting(caroline);
+       ^^^^^^^
+*** Club has no such field 'Meeting'
+
+samples/bad6.decaf
+
+*** Error line 4.
+  if (a != 10 && 5) {
+              ^^
+*** Incompatible operands: bool && int
+
+
+*** Error line 6.
+    break;
+    ^^^^^
+*** break is only allowed inside a loop
+
+
+*** Error line 7.
+  } else if (!a) 
+             ^
+*** Incompatible operand: ! int
+
+
+*** Error line 10.
+  for (a = 0; a + 10 * 5; a = a + 1) {
+              ^^^^^^^^^^
+*** Test expression must have boolean type
+
+
+*** Error line 13.
+  return a;
+         ^
+*** Incompatible return: int given, void expected
+
+samples/bad7.decaf
+
+*** Error line 10.
+  x = Binky(2, 1.3, 1);
+                    ^
+*** Incompatible argument 3: int given, bool expected
+
+
+*** Error line 11.
+  Binky(5);
+  ^^^^^
+*** Function 'Binky' expects 3 arguments but 1 given
+
+
+*** Error line 12.
+  d = Binky(x, d, true);
+    ^
+*** Incompatible operands: double = int
+
+
+*** Error line 13.
+  1.0 + Binky(x, d, x > 3);
+      ^
+*** Incompatible operands: double + int
+
+samples/bad8.decaf
+
+*** Error line 18.
+  red.wheels = 2;
+      ^^^^^^
+*** Honda field 'wheels' only accessible within class scope
+
+
+*** Error line 20.
+      red.horn = 1.0;
+          ^^^^
+*** Honda has no such field 'horn'
+
+
+*** Error line 21.
+  red.Honk();
+      ^^^^
+*** Honda has no such field 'Honk'
+
+
+*** Error line 22.
+  red = (blue < red && blue == null);
+              ^
+*** Incompatible operands: Boat < Honda
+
+
+*** Error line 22.
+  red = (blue < red && blue == null);
+      ^
+*** Incompatible operands: Honda = bool
+
+samples/bad9.decaf
+
+*** Error line 6.
+   a = "hello";
+     ^
+*** Incompatible operands: int = string
+
+
+*** Error line 7.
+   Print(3.5, a, Pi(10));
+         ^^^
+*** Incompatible argument 1: double given, int/bool/string expected
+
+
+*** Error line 7.
+   Print(3.5, a, Pi(10));
+                 ^^^^^^
+*** Incompatible argument 3: double given, int/bool/string expected
+
+
+*** Error line 8.
+   a = 10 + main;
+            ^^^^
+*** No declaration found for variable 'main'
+
+
+*** Error line 11.
+     Print(arr[a], a.length());
+                     ^^^^^^
+*** int has no such field 'length'
+
+samples/matrix.decaf
+samples/mysamples/accessMissmatch.decaf
+
+*** Error line 8.
+        a.AnotherFunction();
+          ^^^^^^^^^^^^^^^
+*** int has no such field 'AnotherFunction'
+
+samples/mysamples/badNewArray.decaf
+
+*** Error line 7.
+    a = NewArray(3, double);
+      ^
+*** Incompatible operands: int[] = double[]
+
+samples/mysamples/findTheSegfault.decaf
+
+*** Error line 8.
+        a.AnotherFunction();
+          ^^^^^^^^^^^^^^^
+*** int has no such field 'AnotherFunction'
+
+samples/mysamples/function.decaf
+
+*** Error line 5.
+    call();
+    ^^^^
+*** No declaration found for function 'call'
+
+samples/mysamples/interfaceNotImplemented.decaf
+
+*** Error line 7.
+class MyClass implements MyInterface
+                         ^^^^^^^^^^^
+*** Class 'MyClass' does not implement entire interface 'MyInterface'
+
+samples/mysamples/readTest.decaf
+
+*** Error line 6.
+    s = ReadInteger();
+      ^
+*** Incompatible operands: string = int
+
+
+*** Error line 7.
+    a = ReadLine();
+      ^
+*** Incompatible operands: int = string
+
+
+*** Error line 9.
+    if(ReadInteger())
+       ^^^^^^^^^^^^^
+*** Test expression must have boolean type
+
+samples/mysamples/returnTest.decaf
+
+*** Error line 6.
+    s = ReadInteger();
+      ^
+*** Incompatible operands: string = int
+
+
+*** Error line 7.
+    a = ReadLine();
+      ^
+*** Incompatible operands: int = string
+
+
+*** Error line 9.
+    return s;
+           ^
+*** Incompatible return: string given, int expected
+
+samples/mysamples/testClassAssignment.decaf
+
+*** Error line 15.
+    b = a; // INVALID
+      ^
+*** Incompatible operands: B = A
+
+samples/mysamples/thisOutOfPlace.decaf
+
+*** Error line 3.
+    this.a = 5;
+    ^^^^
+*** 'this' is only valid within class scope
+
+samples/mysamples/unaryMinus.decaf
+
+*** Error line 8.
+    a = -true;
+        ^
+*** Incompatible operand: - bool
+
+samples/new.decaf
+
+*** Error line 8.
+   test(3.0 * 5.6 - 1.0);
+        ^^^^^^^^^^^^^^^
+*** Incompatible argument 1: double given, int expected
+
+
+*** Error line 9.
+   NewArray(true && false, bool);
+            ^^^^^^^^^^^^^
+*** Size for NewArray must be an integer
+
+
+*** Error line 10.
+   if (NewArray(5, int)) 1;
+       ^^^^^^^^^^^^^^^^
+*** Test expression must have boolean type
+
+
+*** Error line 11.
+   if (ReadInteger()) 1;
+       ^^^^^^^^^^^^^
+*** Test expression must have boolean type
+
+
+*** Error line 12.
+   if (ReadLine()) 1;
+       ^^^^^^^^^^
+*** Test expression must have boolean type
+
+
+*** Error line 13.
+   if (New(Cow)) 1;
+       ^^^^^^^^
+*** Test expression must have boolean type
+
+
+*** Error line 14.
+   if (a[3+5]) 1;
+       ^^^^^^
+*** Test expression must have boolean type
+
+
+*** Error line 15.
+   a[true && false];
+     ^^^^^^^^^^^^^
+*** Array subscript must be an integer
+
+
+*** Error line 16.
+   a[test(4)];
+     ^^^^^^^
+*** Array subscript must be an integer
+
+samples/queue.decaf
+samples/stack.decaf
+samples/t10.decaf
+samples/t12.decaf
+samples/t13.decaf
+samples/t1.decaf
+samples/t2.decaf
+samples/t3.decaf
+samples/t4.decaf
+samples/t5.decaf
+samples/t6.decaf
+samples/t7.decaf
+samples/t9.decaf

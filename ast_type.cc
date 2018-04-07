@@ -41,16 +41,20 @@ NamedType::NamedType(Identifier *i) : Type(*i->GetLocation()) {
     Assert(i != NULL);
     (id=i)->SetParent(this);
     this->typeName = i->name;
-}
+} 
 Type* NamedType::Check()
 {
-    Decl* typeDeclare = this->FindDecl(this->id->name);
+    Decl* typeDeclare = this->FindDecl(this->typeName);
 
-    if (typeDeclare == NULL)
+    ClassDecl* classDecl = dynamic_cast<ClassDecl*>(typeDeclare);
+    InterfaceDecl* interfaceDecl = dynamic_cast<InterfaceDecl*>(typeDeclare);
+
+    if (classDecl == NULL && interfaceDecl == NULL)
     {
         ReportError::IdentifierNotDeclared(this->id, LookingForType);
+        return Type::errorType;
     }
-    return NULL;
+    return this;
 }
 Hashtable<Decl*>* NamedType::GetMembers()
 {

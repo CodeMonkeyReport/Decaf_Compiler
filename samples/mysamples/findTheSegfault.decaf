@@ -1,0 +1,14 @@
+class MyClass
+{
+    void MyFunction()
+    {
+        // Do things
+        int a;
+
+        a.AnotherFunction();
+    }
+    void AnotherFunction()
+    {
+        return;
+    }
+}

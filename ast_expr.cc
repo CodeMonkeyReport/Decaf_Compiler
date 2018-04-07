@@ -53,6 +53,11 @@ Type* NullConstant::Check()
     return Type::nullType;
 }
 
+Type* EmptyExpr::Check()
+{
+    return Type::voidType;
+}
+
 Operator::Operator(yyltype loc, const char *tok) : Node(loc) {
     Assert(tok != NULL);
     strncpy(tokenString, tok, sizeof(tokenString));
@@ -168,6 +173,14 @@ Type* ArithmeticExpr::Check()
 
 Type* RelationalExpr::Check()
 {
+
+    Type* lhsType = this->left->Check();
+    Type* rhsType = this->right->Check();
+
+    if (!lhsType->IsEquivalentTo(rhsType))
+    {
+        ReportError::IncompatibleOperands(this->op, lhsType, rhsType);
+    }
     return Type::boolType; // TODO
 }
 
@@ -178,13 +191,13 @@ Type* AssignExpr::Check()
 
     if (lhsType->IsEquivalentTo(Type::errorType) || rhsType->IsEquivalentTo(Type::errorType))
     {
-        return Type::errorType;
+        return Type::voidType;
     }
 
-    if (!lhsType->IsEquivalentTo(rhsType))
+    if (!(lhsType->IsEquivalentTo(rhsType) || lhsType->CanBeCastTo(rhsType)))
     {
         ReportError::IncompatibleOperands(this->op, lhsType, rhsType);
-        return Type::errorType;
+        return Type::voidType;
     }
     return lhsType;
 }
@@ -223,11 +236,12 @@ Type* FieldAccess::Check()
     // If the base is not null then there was a '.' access
     if (this->base != NULL)
     {
-        Type* baseType = this->base->Check(); // Here we will need to look for the types symbol table TODO
+        Type* baseType = this->base->Check(); // Here we will need to look for the types symbol table
         NamedType* baseNamedType = dynamic_cast<NamedType*>(baseType); // One of these will be null OR both of them will
         ArrayType* baseArrayType = dynamic_cast<ArrayType*>(baseType);
-        if (baseNamedType != NULL)
+        if (baseNamedType != NULL) // Named type
         {
+
             Decl* baseTypeDecl = this->FindDecl(baseNamedType->id->name); // Used to get the declare of the type
             Decl* fieldDecl = baseTypeDecl->symbolTable->Lookup(this->field->name);
             FnDecl* fnFieldDecl = dynamic_cast<FnDecl*>(fieldDecl);
@@ -237,16 +251,46 @@ Type* FieldAccess::Check()
                 ReportError::FieldNotFoundInBase(this->field, baseNamedType);
                 return Type::errorType;
             }
-            else if (fnFieldDecl == NULL)
+            else if (fnFieldDecl == NULL) // Not a function but a field access
             {
-                ReportError::InaccessibleField(this->field, baseType);
-                return Type::errorType;
+                Node* p;
+                ClassDecl* check;
+                bool foundClassDeclare = false;
+
+                for (p = this->parent; p != NULL; p = p->parent) // Traverse through the parse tree to find class declaration
+                {
+                    check = dynamic_cast<ClassDecl*>(p);
+                    if (check != NULL)
+                    {
+                        foundClassDeclare = true;
+                        break;
+                    }
+                }
+                if (foundClassDeclare == false)
+                {
+                    ReportError::InaccessibleField(this->field, baseType);
+                    return Type::errorType;
+                }
+                VarDecl* varFieldDecl = dynamic_cast<VarDecl*>(fieldDecl);
+                if (varFieldDecl != NULL)
+                    return varFieldDecl->type;
             }
             return baseType;
 
         }
         else if (baseArrayType != NULL) // Its an array type
         {
+
+            if (strcmp(this->field->name, "length") == 0)
+            {
+                ReportError::FieldNotFoundInBase(this->field, baseArrayType);
+                return Type::intType;
+            }
+            else
+            {
+                ReportError::FieldNotFoundInBase(this->field, baseArrayType);
+                return Type::errorType;
+            }
             Decl* fieldDecl = baseArrayType->symbolTable->Lookup(this->field->name);
             FnDecl* fnFieldDecl = dynamic_cast<FnDecl*>(fieldDecl);
 
@@ -257,21 +301,41 @@ Type* FieldAccess::Check()
             }
             return baseType;
         }
-        else // Its a primitive type
-        {
-            ReportError::FieldNotFoundInBase(this->field, baseType);
-            return Type::errorType;
-        }
+        // if (!baseType->IsEquivalentTo(Type::errorType))
+        //     ReportError::FieldNotFoundInBase(this->field, baseType);
+        return Type::errorType;
     }
-    else
+    else // base is null
     {
         Decl* source = this->FindDecl(this->field->name);
         VarDecl* varSource = dynamic_cast<VarDecl*>(source);
         if (varSource == NULL)
         {
+            ClassDecl* check;
+            bool foundClassDeclare = false;
+            Node* p;
+            for (p = this->parent; p != NULL; p = p->parent) // Traverse through the parse tree to find class declaration
+            {
+                check = dynamic_cast<ClassDecl*>(p);
+                if (check != NULL)
+                {
+                    foundClassDeclare = true;
+                    break;
+                }
+            }
+            if (foundClassDeclare)
+            {   
+                Decl* decl = check->symbolTable->Lookup(this->field->name);
+                if (decl != NULL)
+                {
+                    VarDecl* varDecl = dynamic_cast<VarDecl*>(decl);
+                    return varDecl->type;
+                }
+            }
             ReportError::IdentifierNotDeclared(this->field, LookingForVariable);
-            return Type::voidType;
+            return Type::errorType;
         }
+        
         return varSource->type;
     }
 }
@@ -298,13 +362,35 @@ Type* Call::Check()
         if (baseType->IsEquivalentTo(Type::errorType))
             return Type::errorType;
 
+        ArrayType* baseArrayType = dynamic_cast<ArrayType*>(baseType);
+        if (baseArrayType != NULL)
+        {
+            FnDecl* lengthFunction = dynamic_cast<FnDecl*>(baseArrayType->symbolTable->Lookup(this->field->name));
+            if (lengthFunction == NULL)
+            {
+                ReportError::FieldNotFoundInBase(this->field, baseType);
+                return Type::errorType;
+            }
+            return Type::intType;
+        }
         Decl* baseDecl = this->FindDecl(baseType->typeName);
         ClassDecl* baseClassDecl = dynamic_cast<ClassDecl*>(baseDecl);
-        if (baseClassDecl == NULL)
-            return Type::errorType;
-
-        foundDeclare = baseClassDecl->symbolTable->Lookup(this->field->name);
-        foundFunctionDeclare = dynamic_cast<FnDecl*>(foundDeclare);
+        if (baseClassDecl == NULL) // Must be an interface
+        {
+            InterfaceDecl* intDecl = dynamic_cast<InterfaceDecl*>(baseDecl);
+            if (intDecl == NULL)
+            {
+                ReportError::FieldNotFoundInBase(this->field, baseType);
+                return Type::errorType;
+            }
+            foundDeclare = intDecl->symbolTable->Lookup(this->field->name);
+            foundFunctionDeclare = dynamic_cast<FnDecl*>(foundDeclare);
+        }
+        else
+        {
+            foundDeclare = baseClassDecl->symbolTable->Lookup(this->field->name);
+            foundFunctionDeclare = dynamic_cast<FnDecl*>(foundDeclare);
+        }
 
         // If there is a field not a function call
         if (foundDeclare != NULL && foundFunctionDeclare == NULL)
@@ -351,7 +437,7 @@ Type* Call::Check()
         {
             if (actualsType->IsEquivalentTo(Type::errorType))
                 continue;
-            ReportError::ArgMismatch(this->actuals->Nth(i), i, actualsType, foundFunctionDeclare->formals->Nth(i)->type);
+            ReportError::ArgMismatch(this->actuals->Nth(i), i+1, actualsType, foundFunctionDeclare->formals->Nth(i)->type);
         }
     }
     return foundFunctionDeclare->returnType;
@@ -386,7 +472,17 @@ NewExpr::NewExpr(yyltype loc, NamedType *c) : Expr(loc) {
 }
 Type* NewExpr::Check()
 {
-    Type* createdType = this->cType->Check();
+    Type* createdType = this->cType;
+    if (createdType->IsEquivalentTo(Type::errorType))
+    {
+        return Type::errorType; // Keep pushing the error out
+    }
+    Decl* typeDeclare = this->FindDecl(this->cType->id->name);
+    ClassDecl* classDecl = dynamic_cast<ClassDecl*>(typeDeclare);   
+    if (classDecl == NULL)
+    {
+        ReportError::IdentifierNotDeclared(this->cType->id, LookingForClass);
+    }
     return createdType; // TODO
 }
 
@@ -403,6 +499,17 @@ Type* NewArrayExpr::Check()
     {
         ReportError::NewArraySizeNotInteger(this->size);
     }
+    NamedType* namedType = dynamic_cast<NamedType*>(this->elemType);
+    if (namedType != NULL)
+    {
+        Decl* typeDeclare = this->FindDecl(namedType->id->name);
+        ClassDecl* classDecl = dynamic_cast<ClassDecl*>(typeDeclare);   
+        if (classDecl == NULL)
+        {
+            ReportError::IdentifierNotDeclared(namedType->id, LookingForClass);
+        }
+    }
+
     return this->type;
 }
 

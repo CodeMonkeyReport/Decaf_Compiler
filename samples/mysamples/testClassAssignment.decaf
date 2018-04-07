@@ -1,0 +1,16 @@
+class A
+{
+ // stuff
+}
+class B extends A
+{
+ // more stuff
+}
+
+int main()
+{
+    A a;
+    B b;
+    a = b; // VALID
+    b = a; // INVALID
+}

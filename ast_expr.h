@@ -35,6 +35,7 @@ class Expr : public Stmt
 class EmptyExpr : public Expr
 {
   public:
+    Type* Check();
 };
 
 class IntConstant : public Expr 
